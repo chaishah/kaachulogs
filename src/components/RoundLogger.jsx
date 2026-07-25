@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X, AlertTriangle, ArrowRight, ArrowLeft, RefreshCw, Trophy } from 'lucide-react';
+import { Check, X, AlertTriangle, ArrowRight, ArrowLeft, Trophy } from 'lucide-react';
 import { getSuitInfo, checkDealerHookViolation, calculatePlayerScore } from '../utils/kaachuRules';
 
 export default function RoundLogger({ round, players, isHookEnabled, onSaveRound, onPreviousRound, isLastRound }) {
   const [phase, setPhase] = useState('bidding'); // 'bidding' | 'results'
   const [bids, setBids] = useState({});
-  const [resultsMode, setResultsMode] = useState('quick'); // 'quick' (pass/fail) | 'exact' (tricks won)
+  const [resultsMode, setResultsMode] = useState('quick'); // 'quick' (1-tap pass/fail) | 'exact' (tricks count)
   const [results, setResults] = useState({});
 
   const suitInfo = getSuitInfo(round.suitId);
@@ -40,8 +40,9 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
   const totalBids = Object.values(bids).reduce((a, b) => Number(a || 0) + Number(b || 0), 0);
 
   const handleBidChange = (playerId, newBid) => {
-    const bidVal = Math.max(0, Math.min(round.cardsDealt, newBid));
-    setBids(prev => ({ ...prev, [playerId]: bidVal }));
+    const parsed = parseInt(newBid, 10);
+    const val = isNaN(parsed) ? 0 : Math.max(0, Math.min(round.cardsDealt, parsed));
+    setBids(prev => ({ ...prev, [playerId]: val }));
   };
 
   const handleQuickToggle = (playerId, made) => {
@@ -59,7 +60,8 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
   };
 
   const handleTricksChange = (playerId, tricks) => {
-    const tricksVal = Math.max(0, Math.min(round.cardsDealt, tricks));
+    const parsed = parseInt(tricks, 10);
+    const tricksVal = isNaN(parsed) ? 0 : Math.max(0, Math.min(round.cardsDealt, parsed));
     const playerBid = bids[playerId] ?? 0;
     const made = playerBid === tricksVal;
     const score = calculatePlayerScore(playerBid, tricksVal);
@@ -83,7 +85,6 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
       return;
     }
 
-    // Default results initialization if not touched
     const updatedResults = { ...results };
     players.forEach(p => {
       const b = bids[p.id] ?? 0;
@@ -105,18 +106,15 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
   };
 
   const handleSubmitRound = () => {
-    // Validate exact tricks total if using exact mode
     if (resultsMode === 'exact') {
       let sumTricks = 0;
-      let allEntered = true;
       players.forEach(p => {
         const t = results[p.id]?.tricksWon;
-        if (t === null || t === undefined) allEntered = false;
-        else sumTricks += Number(t);
+        if (t !== null && t !== undefined) sumTricks += Number(t);
       });
 
       if (sumTricks !== round.cardsDealt) {
-        const confirmMsg = `Total tricks won (${sumTricks}) does not equal total cards dealt (${round.cardsDealt}). Do you want to submit anyway?`;
+        const confirmMsg = `Total tricks won (${sumTricks}) does not equal total cards dealt (${round.cardsDealt}). Submit anyway?`;
         if (!window.confirm(confirmMsg)) return;
       }
     }
@@ -127,6 +125,9 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
     });
   };
 
+  // Generate array of numbers [0, 1, ..., cardsDealt] for direct digit tapping
+  const digitOptions = Array.from({ length: round.cardsDealt + 1 }, (_, i) => i);
+
   return (
     <div style={{ animation: 'fadeIn 0.2s ease-out' }}>
       {/* Header Info Card */}
@@ -136,7 +137,7 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
             <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
               Round {round.roundNumber}
             </span>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800 }}>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.6rem', fontWeight: 800 }}>
               {round.cardsDealt} {round.cardsDealt === 1 ? 'Card' : 'Cards'} Dealt
             </h2>
           </div>
@@ -177,18 +178,18 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
           <div style={{
             marginTop: '10px',
             padding: '8px 12px',
-            background: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
+            background: '#fef3c7',
+            border: '1px solid #fde68a',
             borderRadius: 'var(--radius-sm)',
             fontSize: '0.8rem',
-            color: '#fcd34d',
+            color: '#92400e',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
           }}>
-            <AlertTriangle size={16} color="#f59e0b" />
+            <AlertTriangle size={16} color="#d97706" />
             <span>
-              Hook Rule Active: Dealer <strong>{dealerPlayer.name}</strong> cannot bid <strong>{forbiddenDealerBid}</strong>.
+              Dealer Hook Rule: <strong>{dealerPlayer.name}</strong> cannot bid <strong>{forbiddenDealerBid}</strong>.
             </span>
           </div>
         )}
@@ -201,9 +202,9 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
           onClick={() => setPhase('bidding')}
           style={{
             flex: 1,
-            background: phase === 'bidding' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-            borderColor: phase === 'bidding' ? 'var(--accent-primary)' : 'var(--border-card)',
-            color: phase === 'bidding' ? '#fff' : 'var(--text-secondary)'
+            background: phase === 'bidding' ? '#1c1917' : '#faf8f5',
+            borderColor: phase === 'bidding' ? '#1c1917' : 'var(--border-card)',
+            color: phase === 'bidding' ? '#ffffff' : 'var(--text-secondary)'
           }}
         >
           1. Bids Entry
@@ -213,9 +214,9 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
           onClick={handleProceedToResults}
           style={{
             flex: 1,
-            background: phase === 'results' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-            borderColor: phase === 'results' ? 'var(--accent-primary)' : 'var(--border-card)',
-            color: phase === 'results' ? '#fff' : 'var(--text-secondary)'
+            background: phase === 'results' ? '#1c1917' : '#faf8f5',
+            borderColor: phase === 'results' ? '#1c1917' : 'var(--border-card)',
+            color: phase === 'results' ? '#ffffff' : 'var(--text-secondary)'
           }}
         >
           2. Log Results
@@ -225,11 +226,11 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
       {/* PHASE 1: BIDDING */}
       {phase === 'bidding' && (
         <div className="glass-card">
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700, marginBottom: '14px' }}>
-            Enter Bids for Round {round.roundNumber}
+          <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 700, marginBottom: '14px' }}>
+            Select Bids for Round {round.roundNumber}
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {players.map(p => {
               const isDealer = p.id === dealerPlayerId;
               const currentBid = bids[p.id] ?? 0;
@@ -239,47 +240,81 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
                 <div
                   key={p.id}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
                     padding: '12px 14px',
-                    background: isForbiddenForThisPlayer ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                    border: `1px solid ${isForbiddenForThisPlayer ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-card)'}`,
-                    borderRadius: 'var(--radius-md)'
+                    background: isForbiddenForThisPlayer ? '#fef2f2' : '#faf8f5',
+                    border: `1px solid ${isForbiddenForThisPlayer ? '#fca5a5' : 'var(--border-card)'}`,
+                    borderRadius: 'var(--radius-md)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>{p.name}</span>
+                      <span style={{ fontWeight: 700, fontSize: '1rem' }}>{p.name}</span>
                       {isDealer && <span className="dealer-badge">Dealer</span>}
                     </div>
-                    {isForbiddenForThisPlayer && (
-                      <span style={{ fontSize: '0.72rem', color: 'var(--accent-danger)', fontWeight: 600 }}>
-                        Forbidden Bid! (Hook Rule)
-                      </span>
-                    )}
+
+                    {/* Stepper + Direct Typeable Number Box */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        className="stepper-btn"
+                        onClick={() => handleBidChange(p.id, currentBid - 1)}
+                        disabled={currentBid <= 0}
+                      >
+                        -
+                      </button>
+
+                      <input
+                        type="number"
+                        min="0"
+                        max={round.cardsDealt}
+                        value={currentBid}
+                        onChange={(e) => handleBidChange(p.id, e.target.value)}
+                        style={{
+                          width: '46px',
+                          height: '40px',
+                          background: '#ffffff',
+                          border: `2px solid ${isForbiddenForThisPlayer ? 'var(--accent-danger)' : '#1c1917'}`,
+                          borderRadius: 'var(--radius-md)',
+                          color: isForbiddenForThisPlayer ? 'var(--accent-danger)' : 'var(--text-primary)',
+                          fontFamily: 'var(--font-body)',
+                          fontWeight: 800,
+                          fontSize: '1.15rem',
+                          textAlign: 'center',
+                          outline: 'none'
+                        }}
+                      />
+
+                      <button
+                        className="stepper-btn"
+                        onClick={() => handleBidChange(p.id, currentBid + 1)}
+                        disabled={currentBid >= round.cardsDealt}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Stepper Input */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      className="stepper-btn"
-                      onClick={() => handleBidChange(p.id, currentBid - 1)}
-                      disabled={currentBid <= 0}
-                    >
-                      -
-                    </button>
-                    <div className="number-display" style={{ color: isForbiddenForThisPlayer ? 'var(--accent-danger)' : 'var(--text-primary)' }}>
-                      {currentBid}
-                    </div>
-                    <button
-                      className="stepper-btn"
-                      onClick={() => handleBidChange(p.id, currentBid + 1)}
-                      disabled={currentBid >= round.cardsDealt}
-                    >
-                      +
-                    </button>
+                  {/* 1-Tap Quick Digit Buttons */}
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {digitOptions.map(num => (
+                      <button
+                        key={num}
+                        type="button"
+                        className={`digit-chip ${currentBid === num ? 'active' : ''}`}
+                        onClick={() => handleBidChange(p.id, num)}
+                      >
+                        {num}
+                      </button>
+                    ))}
                   </div>
+
+                  {isForbiddenForThisPlayer && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: 700 }}>
+                      ⚠️ Hook Rule Violation! Dealer cannot bid {forbiddenDealerBid}.
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -300,12 +335,12 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
       {phase === 'results' && (
         <div className="glass-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700 }}>
+            <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 700 }}>
               Round Results
             </h3>
 
             {/* Mode selector */}
-            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255, 255, 255, 0.06)', padding: '3px', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ display: 'flex', gap: '4px', background: '#f5f2e9', padding: '3px', borderRadius: 'var(--radius-md)' }}>
               <button
                 type="button"
                 onClick={() => setResultsMode('quick')}
@@ -313,8 +348,8 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
                   padding: '4px 10px',
                   borderRadius: 'var(--radius-sm)',
                   border: 'none',
-                  background: resultsMode === 'quick' ? 'var(--accent-primary)' : 'transparent',
-                  color: '#fff',
+                  background: resultsMode === 'quick' ? '#1c1917' : 'transparent',
+                  color: resultsMode === 'quick' ? '#fff' : 'var(--text-secondary)',
                   fontSize: '0.78rem',
                   fontWeight: 700,
                   cursor: 'pointer'
@@ -329,8 +364,8 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
                   padding: '4px 10px',
                   borderRadius: 'var(--radius-sm)',
                   border: 'none',
-                  background: resultsMode === 'exact' ? 'var(--accent-primary)' : 'transparent',
-                  color: '#fff',
+                  background: resultsMode === 'exact' ? '#1c1917' : 'transparent',
+                  color: resultsMode === 'exact' ? '#fff' : 'var(--text-secondary)',
                   fontSize: '0.78rem',
                   fontWeight: 700,
                   cursor: 'pointer'
@@ -351,7 +386,7 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
                   key={p.id}
                   style={{
                     padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.03)',
+                    background: '#faf8f5',
                     border: '1px solid var(--border-card)',
                     borderRadius: 'var(--radius-md)',
                     display: 'flex',
@@ -361,14 +396,14 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <span style={{ fontWeight: 700, fontSize: '1rem' }}>{p.name}</span>
+                      <span style={{ fontWeight: 700, fontSize: '0.98rem' }}>{p.name}</span>
                       <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>
                         Bid: <strong>{playerBid}</strong>
                       </span>
                     </div>
 
                     <div style={{
-                      fontFamily: 'var(--font-heading)',
+                      fontFamily: 'var(--font-body)',
                       fontWeight: 800,
                       fontSize: '1.1rem',
                       color: res.madeBid ? 'var(--accent-success)' : 'var(--text-muted)'
@@ -385,7 +420,7 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
                         className={`pass-fail-btn pass ${res.madeBid ? 'active' : ''}`}
                         onClick={() => handleQuickToggle(p.id, true)}
                       >
-                        <Check size={18} /> Made Bid ({10 + playerBid} pts)
+                        <Check size={18} /> Made ({10 + playerBid} pts)
                       </button>
                       <button
                         type="button"
@@ -396,27 +431,62 @@ export default function RoundLogger({ round, players, isHookEnabled, onSaveRound
                       </button>
                     </div>
                   ) : (
-                    /* Exact Tricks Won Counter */
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Tricks Won:</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button
-                          className="stepper-btn"
-                          onClick={() => handleTricksChange(p.id, (res.tricksWon ?? 0) - 1)}
-                          disabled={(res.tricksWon ?? 0) <= 0}
-                        >
-                          -
-                        </button>
-                        <div className="number-display" style={{ color: res.madeBid ? 'var(--accent-success)' : 'var(--accent-danger)' }}>
-                          {res.tricksWon ?? 0}
+                    /* Exact Tricks Won Counter + Direct Digit Bar */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Tricks Won:</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            className="stepper-btn"
+                            onClick={() => handleTricksChange(p.id, (res.tricksWon ?? 0) - 1)}
+                            disabled={(res.tricksWon ?? 0) <= 0}
+                          >
+                            -
+                          </button>
+
+                          <input
+                            type="number"
+                            min="0"
+                            max={round.cardsDealt}
+                            value={res.tricksWon ?? 0}
+                            onChange={(e) => handleTricksChange(p.id, e.target.value)}
+                            style={{
+                              width: '46px',
+                              height: '40px',
+                              background: '#ffffff',
+                              border: `2px solid ${res.madeBid ? 'var(--accent-success)' : 'var(--accent-danger)'}`,
+                              borderRadius: 'var(--radius-md)',
+                              color: res.madeBid ? 'var(--accent-success)' : 'var(--accent-danger)',
+                              fontFamily: 'var(--font-body)',
+                              fontWeight: 800,
+                              fontSize: '1.15rem',
+                              textAlign: 'center',
+                              outline: 'none'
+                            }}
+                          />
+
+                          <button
+                            className="stepper-btn"
+                            onClick={() => handleTricksChange(p.id, (res.tricksWon ?? 0) + 1)}
+                            disabled={(res.tricksWon ?? 0) >= round.cardsDealt}
+                          >
+                            +
+                          </button>
                         </div>
-                        <button
-                          className="stepper-btn"
-                          onClick={() => handleTricksChange(p.id, (res.tricksWon ?? 0) + 1)}
-                          disabled={(res.tricksWon ?? 0) >= round.cardsDealt}
-                        >
-                          +
-                        </button>
+                      </div>
+
+                      {/* Digit Chips for Tricks */}
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {digitOptions.map(num => (
+                          <button
+                            key={num}
+                            type="button"
+                            className={`digit-chip ${(res.tricksWon ?? 0) === num ? 'active' : ''}`}
+                            onClick={() => handleTricksChange(p.id, num)}
+                          >
+                            {num}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}

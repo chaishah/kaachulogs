@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus, Trash2, ArrowUp, ArrowDown, Play, ShieldAlert, Sparkles, Settings2 } from 'lucide-react';
+import { Users, Plus, Trash2, ArrowUp, ArrowDown, Play, ShieldAlert, Settings2 } from 'lucide-react';
 import { SUITS } from '../utils/kaachuRules';
 
 export default function SetupView({ onStartGame }) {
@@ -14,20 +14,20 @@ export default function SetupView({ onStartGame }) {
   const [includeNoTrump, setIncludeNoTrump] = useState(true);
   const [isHookEnabled, setIsHookEnabled] = useState(true);
   const [baseSuccessPoints, setBaseSuccessPoints] = useState(10);
-  const [penaltyMode, setPenaltyMode] = useState('zero'); // 'zero' | 'difference'
+  const [penaltyMode, setPenaltyMode] = useState('zero');
 
   const maxCardsCalculated = Math.max(1, Math.floor(52 / Math.max(1, players.length)));
-  const [maxCards, setMaxCards] = useState(maxCardsCalculated);
+  const [maxCardsInput, setMaxCardsInput] = useState(String(maxCardsCalculated));
 
   const handleAddPlayer = (e) => {
     e.preventDefault();
     if (!newPlayerName.trim()) return;
     const name = newPlayerName.trim();
-    setPlayers(prev => [...prev, { id: Date.now().toString(), name }]);
+    const updated = [...players, { id: Date.now().toString(), name }];
+    setPlayers(updated);
     setNewPlayerName('');
-    // Auto update max cards limit if reasonable
-    const newCount = players.length + 1;
-    setMaxCards(Math.floor(52 / newCount));
+    const newMax = Math.floor(52 / updated.length);
+    setMaxCardsInput(String(newMax));
   };
 
   const handleRemovePlayer = (id) => {
@@ -37,7 +37,8 @@ export default function SetupView({ onStartGame }) {
     }
     const updated = players.filter(p => p.id !== id);
     setPlayers(updated);
-    setMaxCards(Math.floor(52 / updated.length));
+    const newMax = Math.floor(52 / updated.length);
+    setMaxCardsInput(String(newMax));
   };
 
   const handleMovePlayer = (index, direction) => {
@@ -56,10 +57,13 @@ export default function SetupView({ onStartGame }) {
       return;
     }
 
+    const parsedMax = parseInt(maxCardsInput, 10);
+    const finalMaxCards = isNaN(parsedMax) || parsedMax < 1 ? maxCardsCalculated : Math.min(13, parsedMax);
+
     onStartGame({
       players,
       structure,
-      maxCards: Number(maxCards) || maxCardsCalculated,
+      maxCards: finalMaxCards,
       includeNoTrump,
       isHookEnabled,
       baseSuccessPoints: Number(baseSuccessPoints) || 10,
@@ -68,23 +72,23 @@ export default function SetupView({ onStartGame }) {
   };
 
   return (
-    <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
+    <div style={{ animation: 'fadeIn 0.2s ease-out' }}>
       {/* Title Banner */}
-      <div className="glass-card" style={{ textAlign: 'center', padding: '24px 16px' }}>
-        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.6rem', fontWeight: 800, marginBottom: '6px' }}>
-          New Game Setup
+      <div className="glass-card" style={{ textAlign: 'center', padding: '20px 16px' }}>
+        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+          Kaachuful Setup
         </h2>
-        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto' }}>
-          Add players in seating order around the table and customize your game rules.
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+          Set players in seating order around your table
         </p>
       </div>
 
       {/* Players Card */}
       <div className="glass-card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={20} color="var(--accent-primary)" />
-            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700 }}>
+            <Users size={18} color="var(--accent-primary)" />
+            <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '1rem', fontWeight: 700 }}>
               Players Seating Order ({players.length})
             </h3>
           </div>
@@ -99,7 +103,7 @@ export default function SetupView({ onStartGame }) {
             onChange={(e) => setNewPlayerName(e.target.value)}
             style={{
               flex: 1,
-              background: 'rgba(255, 255, 255, 0.06)',
+              background: '#f6f3eb',
               border: '1px solid var(--border-card)',
               borderRadius: 'var(--radius-md)',
               padding: '10px 14px',
@@ -108,7 +112,7 @@ export default function SetupView({ onStartGame }) {
               outline: 'none'
             }}
           />
-          <button type="submit" className="btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+          <button type="submit" className="btn-secondary">
             <Plus size={18} /> Add
           </button>
         </form>
@@ -123,7 +127,7 @@ export default function SetupView({ onStartGame }) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '10px 14px',
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: '#faf8f5',
                 border: '1px solid var(--border-card)',
                 borderRadius: 'var(--radius-md)'
               }}
@@ -133,8 +137,8 @@ export default function SetupView({ onStartGame }) {
                   width: '24px',
                   height: '24px',
                   borderRadius: 'var(--radius-full)',
-                  background: idx === 0 ? 'var(--accent-warning)' : 'rgba(255, 255, 255, 0.1)',
-                  color: idx === 0 ? '#000' : 'var(--text-secondary)',
+                  background: idx === 0 ? '#d97706' : '#e7e2d7',
+                  color: idx === 0 ? '#fff' : 'var(--text-secondary)',
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   display: 'flex',
@@ -143,23 +147,16 @@ export default function SetupView({ onStartGame }) {
                 }}>
                   {idx + 1}
                 </span>
-                <span style={{ fontWeight: 600, fontSize: '1rem' }}>{p.name}</span>
+                <span style={{ fontWeight: 600, fontSize: '0.98rem' }}>{p.name}</span>
                 {idx === 0 && <span className="dealer-badge">First Dealer</span>}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                 <button
                   type="button"
                   onClick={() => handleMovePlayer(idx, -1)}
                   disabled={idx === 0}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    opacity: idx === 0 ? 0.2 : 1,
-                    cursor: idx === 0 ? 'default' : 'pointer',
-                    padding: '4px'
-                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', opacity: idx === 0 ? 0.2 : 1, cursor: 'pointer', padding: '4px' }}
                 >
                   <ArrowUp size={16} />
                 </button>
@@ -167,28 +164,14 @@ export default function SetupView({ onStartGame }) {
                   type="button"
                   onClick={() => handleMovePlayer(idx, 1)}
                   disabled={idx === players.length - 1}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    opacity: idx === players.length - 1 ? 0.2 : 1,
-                    cursor: idx === players.length - 1 ? 'default' : 'pointer',
-                    padding: '4px'
-                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', opacity: idx === players.length - 1 ? 0.2 : 1, cursor: 'pointer', padding: '4px' }}
                 >
                   <ArrowDown size={16} />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleRemovePlayer(p.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--accent-danger)',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    marginLeft: '4px'
-                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer', padding: '4px', marginLeft: '4px' }}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -198,19 +181,19 @@ export default function SetupView({ onStartGame }) {
         </div>
       </div>
 
-      {/* Rules Customization Card */}
+      {/* Rules & Max Cards Selection Card */}
       <div className="glass-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-          <Settings2 size={20} color="var(--accent-primary)" />
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700 }}>
-            Game Rules & Structure
+          <Settings2 size={18} color="var(--accent-primary)" />
+          <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '1rem', fontWeight: 700 }}>
+            Game Rules & Cards
           </h3>
         </div>
 
-        {/* Round Structure */}
+        {/* Round Pattern */}
         <div style={{ marginBottom: '16px' }}>
           <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
-            Round Progression Pattern
+            Round Pattern
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
             {[
@@ -225,10 +208,9 @@ export default function SetupView({ onStartGame }) {
                 style={{
                   padding: '10px 6px',
                   borderRadius: 'var(--radius-md)',
-                  border: structure === opt.id ? '2px solid var(--accent-primary)' : '1px solid var(--border-card)',
-                  background: structure === opt.id ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                  color: structure === opt.id ? '#ffffff' : 'var(--text-secondary)',
-                  fontFamily: 'var(--font-heading)',
+                  border: structure === opt.id ? '2px solid #1c1917' : '1px solid var(--border-card)',
+                  background: structure === opt.id ? '#1c1917' : '#faf8f5',
+                  color: structure === opt.id ? '#ffffff' : 'var(--text-primary)',
                   fontWeight: 700,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
@@ -236,47 +218,66 @@ export default function SetupView({ onStartGame }) {
                 }}
               >
                 <div>{opt.label}</div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 500, opacity: 0.8 }}>{opt.desc}</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 500, opacity: 0.7 }}>{opt.desc}</div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Max Cards Limit */}
-        <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <label style={{ fontSize: '0.9rem', fontWeight: 600, display: 'block' }}>
-              Max Cards Per Round
-            </label>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Default max: {maxCardsCalculated} cards (52 / {players.length})
-            </span>
+        {/* Direct Typeable Max Cards Input & Quick Digit Buttons */}
+        <div style={{ marginBottom: '16px', background: '#faf8f5', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-card)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <div>
+              <label style={{ fontSize: '0.9rem', fontWeight: 700, display: 'block' }}>
+                Max Cards Per Round
+              </label>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Type any number (1 - 13):
+              </span>
+            </div>
+
+            {/* Direct Number Input Box */}
+            <input
+              type="number"
+              min="1"
+              max="13"
+              value={maxCardsInput}
+              onChange={(e) => setMaxCardsInput(e.target.value)}
+              style={{
+                width: '64px',
+                background: '#ffffff',
+                border: '2px solid #1c1917',
+                borderRadius: 'var(--radius-md)',
+                padding: '6px',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 800,
+                fontSize: '1.2rem',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+            />
           </div>
-          <input
-            type="number"
-            min="1"
-            max="13"
-            value={maxCards}
-            onChange={(e) => setMaxCards(Math.max(1, Math.min(13, Number(e.target.value))))}
-            style={{
-              width: '64px',
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid var(--border-card)',
-              borderRadius: 'var(--radius-md)',
-              padding: '8px',
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 800,
-              fontSize: '1.1rem',
-              textAlign: 'center'
-            }}
-          />
+
+          {/* Quick Digit Selector Buttons (1 to 13) */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((num) => (
+              <button
+                key={num}
+                type="button"
+                className={`digit-chip ${maxCardsInput === String(num) ? 'active' : ''}`}
+                onClick={() => setMaxCardsInput(String(num))}
+              >
+                {num}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Suit Rotation Preview & No Trump Toggle */}
+        {/* Suit Rotation & No Trump Toggle */}
         <div style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Suit Rotation (KAACHUFUL)</span>
+            <span style={{ fontSize: '0.88rem', fontWeight: 700 }}>Gujarati Suits (KAACHUFUL)</span>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
               <input
                 type="checkbox"
@@ -302,17 +303,17 @@ export default function SetupView({ onStartGame }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 12px',
-          background: 'rgba(255, 255, 255, 0.03)',
+          background: '#faf8f5',
           borderRadius: 'var(--radius-md)',
-          marginBottom: '12px'
+          border: '1px solid var(--border-card)'
         }}>
           <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <ShieldAlert size={16} color="var(--accent-warning)" />
               Dealer Hook Rule
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Dealer cannot bid a number making total bids equal cards dealt.
+              Dealer cannot bid a number making total bids equal to cards dealt.
             </div>
           </div>
           <input
@@ -326,7 +327,7 @@ export default function SetupView({ onStartGame }) {
 
       {/* Start Button */}
       <button className="btn-primary" onClick={handleStart} style={{ padding: '16px' }}>
-        <Play size={20} fill="#fff" /> Start Kaachuful Game
+        <Play size={20} fill="#f6f3eb" /> Start Kaachuful Game
       </button>
     </div>
   );

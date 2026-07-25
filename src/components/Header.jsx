@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw, Award, PlayCircle, HelpCircle } from 'lucide-react';
+import { RotateCcw, HelpCircle } from 'lucide-react';
 
 export default function Header({ gameActive, onNewGame, currentRound, totalRounds, onShowRules }) {
   return (
@@ -15,23 +15,25 @@ export default function Header({ gameActive, onNewGame, currentRound, totalRound
           width: '42px',
           height: '42px',
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+          background: '#1c1917',
+          color: '#f6f3eb',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '1.4rem',
-          boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)'
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}>
           ♠️
         </div>
         <div>
           <h1 style={{
             fontFamily: 'var(--font-heading)',
-            fontSize: '1.35rem',
+            fontSize: '1.4rem',
             fontWeight: 800,
+            color: 'var(--text-primary)',
             lineHeight: 1.1
           }}>
-            Kaachu<span className="text-gradient">Logs</span>
+            Kaachu<span style={{ color: '#b91c1c' }}>Logs</span>
           </h1>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
             Judgment Score Keeper
@@ -42,15 +44,15 @@ export default function Header({ gameActive, onNewGame, currentRound, totalRound
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {gameActive && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: '#faf8f5',
             border: '1px solid var(--border-card)',
             padding: '4px 10px',
             borderRadius: 'var(--radius-full)',
             fontSize: '0.78rem',
             fontWeight: 700,
-            color: 'var(--text-secondary)'
+            color: 'var(--text-primary)'
           }}>
-            R {currentRound}/{totalRounds}
+            Round {currentRound}/{totalRounds}
           </div>
         )}
 
