@@ -101,7 +101,11 @@ export function calculatePlayerScore(bid, tricksWonOrMade, options = {}) {
   }
 
   if (made) {
-    return Number(bid) + baseSuccessPoints;
+    const numBid = Number(bid);
+    if (numBid <= 1) {
+      return 10;
+    }
+    return numBid * 10;
   } else {
     if (penaltyMode === 'difference' && actualTricks !== null) {
       return -Math.abs(actualTricks - bid) * penaltyMultiplier;

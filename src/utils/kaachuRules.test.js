@@ -54,17 +54,25 @@ test('checkDealerHookViolation correctly identifies forbidden bid for dealer', (
 });
 
 test('calculatePlayerScore evaluates standard scoring accurately', () => {
-  // Exact bid 3 => 10 + 3 = 13
-  assert.equal(calculatePlayerScore(3, 3), 13);
-  assert.equal(calculatePlayerScore(3, true), 13);
-
-  // Failed bid 3 (won 2) => 0
-  assert.equal(calculatePlayerScore(3, 2), 0);
-  assert.equal(calculatePlayerScore(3, false), 0);
-
-  // Zero bid made => 10 + 0 = 10
+  // Bid 0 made => 10 points
   assert.equal(calculatePlayerScore(0, 0), 10);
   assert.equal(calculatePlayerScore(0, true), 10);
+
+  // Bid 1 made => 10 points
+  assert.equal(calculatePlayerScore(1, 1), 10);
+  assert.equal(calculatePlayerScore(1, true), 10);
+
+  // Bid 2 made => 2 * 10 = 20 points
+  assert.equal(calculatePlayerScore(2, 2), 20);
+  assert.equal(calculatePlayerScore(2, true), 20);
+
+  // Bid 3 made => 3 * 10 = 30 points
+  assert.equal(calculatePlayerScore(3, 3), 30);
+  assert.equal(calculatePlayerScore(3, true), 30);
+
+  // Failed bid 3 (won 2) => 0 points
+  assert.equal(calculatePlayerScore(3, 2), 0);
+  assert.equal(calculatePlayerScore(3, false), 0);
 });
 
 test('calculateTotals computes running scores and streaks', () => {

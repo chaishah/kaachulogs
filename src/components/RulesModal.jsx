@@ -74,7 +74,7 @@ export default function RulesModal({ onClose }) {
               4. Scoring System
             </h4>
             <ul style={{ paddingLeft: '20px' }}>
-              <li><strong>Exact Bid:</strong> Score <code>10 + Bid</code> points (e.g. Bid 3 & win 3 = 13 pts; Bid 0 & win 0 = 10 pts).</li>
+              <li><strong>Exact Bid:</strong> Score <code>10</code> points for bids of 0 or 1. Bids of 2 or more score <code>Bid × 10</code> points (e.g. Bid 0/1 = 10 pts; Bid 2 = 20 pts; Bid 3 = 30 pts).</li>
               <li><strong>Missed Bid:</strong> Score <code>0</code> points (win more or fewer tricks than bid).</li>
             </ul>
           </div>
